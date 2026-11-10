@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>別被 AI 綁架：如何與生成式 AI 建立健康的協作關係？</title>
+  <style>
+    /* 全局重置與變數 */
+    :root {
+      --bg-workspace: #0f172a;
+      --slide-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --success: #16a34a;
+      --success-light: #f0fdf4;
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --border-color: #e2e8f0;
+      --shadow-slide: 0 20px 45px -10px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg-workspace);
+      background-image: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    /* 頂部導航列 */
+    header {
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+    }
+
+    .brand-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      background: #3b82f6;
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .btn-fs {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-fs:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 簡報中央畫布容器 */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* 白色高對比實體投影片卡片 (像真正投影幕) */
+    .slide-canvas {
+      width: 100%;
+      max-width: 1050px;
+      min-height: 560px;
+      background: var(--slide-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow-slide);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 每一頁投影片：預設隱藏，啟用時以 flex 呈現 */
+    .slide {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+      min-height: 560px;
+      padding: 44px 52px;
+      color: var(--text-main);
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 標題與分類標籤 */
+    .slide-header {
+      margin-bottom: 24px;
+    }
+
+    .tag-category {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      border: 1px solid #bfdbfe;
+    }
+
+    .title-main {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    .title-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* 內容主體區塊 */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* 卡片格狀排版 */
+    .card-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .info-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .info-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-badge {
+      align-self: flex-start;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-green { background: #dcfce7; color: #166534; }
+
+    .card-h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 10px;
+    }
+
+    .card-p {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: #475569;
+    }
+
+    .card-p strong {
+      color: #0f172a;
+    }
+
+    /* 左右雙欄對比版面 (Slide 3) */
+    .split-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .split-col {
+      border-radius: 16px;
+      padding: 26px 28px;
+      border: 2px solid transparent;
+    }
+
+    .split-ai {
+      background: #fdf2f4;
+      border-color: #fecdd3;
+    }
+
+    .split-human {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .split-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .split-ai .split-title { color: #be123c; }
+    .split-human .split-title { color: #15803d; }
+
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .bullet-list li {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #334155;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .bullet-icon {
+      font-size: 1.15rem;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    /* 大橫幅重點卡 (Slide 4 同儕緩衝) */
+    .banner-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px 26px;
+      margin-bottom: 16px;
+    }
+
+    .banner-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .banner-desc {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #475569;
+    }
+
+    .quote-box {
+      background: #eff6ff;
+      border-left: 5px solid #3b82f6;
+      border-radius: 8px;
+      padding: 14px 20px;
+      font-size: 0.98rem;
+      color: #1e40af;
+      line-height: 1.6;
+    }
+
+    /* 封面頁特製排版 (Slide 1) */
+    .hero-layout {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .hero-h1 {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.25;
+      margin: 16px 0 20px;
+    }
+
+    .hero-lead {
+      font-size: 1.25rem;
+      color: #475569;
+      line-height: 1.75;
+      max-width: 820px;
+      margin: 0 auto 30px;
+    }
+
+    .hero-badges-group {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .hero-pill {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    /* 頁尾底部資訊列 */
+    .slide-footer {
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    /* 控制面板列（上一頁/下一頁） */
+    footer {
+      background: #0f172a;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-nav {
+      background: #ffffff;
+      color: #0f172a;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-nav.primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .btn-nav.primary:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+
+    .btn-nav:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* 指示圓點 */
+    .dots-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #475569;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .nav-dot.active {
+      width: 28px;
+      border-radius: 12px;
+      background: #38bdf8;
+    }
+
+    .page-indicator {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #94a3b8;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .page-indicator span {
+      color: #38bdf8;
+    }
+
+    /* 響應式微調 */
+    @media (max-width: 900px) {
+      .slide {
+        padding: 28px 24px;
+      }
+      .card-row {
+        grid-template-columns: 1fr;
+      }
+      .split-row {
+        grid-template-columns: 1fr;
+      }
+      .title-main {
+        font-size: 1.6rem;
+      }
+      .hero-h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部資訊列 -->
+  <header>
+    <div class="brand-title">
+      <span class="brand-badge">WIKI 導讀簡報</span>
+      別被 AI 綁架：人機健康協作指南
+    </div>
+    <button class="btn-fs" id="btnFullscreen">全螢幕投影模式</button>
+  </header>
+
+  <!-- 中央簡報舞台 -->
+  <main>
+    <div class="slide-canvas">
+
+      <!-- ================= Slide 1: 封面 ================= -->
+      <section class="slide active" data-slide="1">
+        <div class="slide-header" style="text-align: center;">
+          <span class="tag-category">✨ 現代工作者與學生的數位福祉必修課</span>
+        </div>
+
+        <div class="slide-body hero-layout">
+          <h1 class="hero-h1">別被 AI 綁架：<br>如何與生成式 AI 建立健康的協作關係？</h1>
+          <p class="hero-lead">
+            做事速度變快了，為什麼整個人卻越來越疲累？<br>
+            結合心理健康與人機互動科學，帶你用最白話的日常語言，看清「AI 焦慮」的本質，找回生活與工作的健康節奏！
+          </p>
+
+          <div class="hero-badges-group">
+            <span class="hero-pill">💡 生產力的真相</span>
+            <span class="hero-pill">🤝 人際同儕緩衝</span>
+            <span class="hero-pill">🛡️ 三大數位適應心法</span>
+          </div>
+        </div>
+
+        <div class="slide-footer">
+          <span>主題：數位福祉與心理調適</span>
+          <span>按右下方「下一頁」或鍵盤「→」開始瀏覽</span>
+        </div>
+      </section>
+
+      <!-- ================= Slide 2: 科技協作的雙刃劍 ================= -->
+      <section class="slide" data-slide="2">
+        <div class="slide-header">
+          <span class="tag-category">第一章 ｜ 科技協作的雙刃劍</span>
+          <h2 class="title-main">生產力上升了，但心理健康呢？</h2>
+          <p class="title-sub">為什麼用了最強的 AI 工具，我們卻感覺精神被掏空？</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="card-row">
+            <!-- 卡片 1 -->
+            <div class="info-card">
+              <span class="card-badge badge-blue">陷阱 1</span>
+              <h3 class="card-h3">生產力的假象</h3>
+              <p class="card-p">
+                研究證實：生成式 AI 確實能顯著提升工作效率。<br><br>
+                但必須認清：<strong>「做很快 ≠ 心情變好」</strong>。產出的暴增，並不會直接轉化為心理健康的改善，反而可能迎來更高壓力的工作量。
+              </p>
+            </div>
+
+            <!-- 卡片 2 -->
+            <div class="info-card">
+              <span class="card-badge badge-red">核心真兇</span>
+              <h3 class="card-h3">AI 焦慮 (AI Anxiety)</h3>
+              <p class="card-p">
+                用 AI 本身不會讓人崩潰，真兇是潛意識裡的恐慌：<br><br>
+                <strong>「我會不會被取代？」、「技術變太快我跟不上？」</strong>這種未知的恐懼會直接引發<strong>情緒耗竭 (Emotional Exhaustion)</strong>。
+              </p>
+            </div>
+
+            <!-- 卡片 3 -->
+            <div class="info-card">
+              <span class="card-badge badge-amber">本質脫鉤</span>
+              <h3 class="card-h3">功能價值 vs. 情感價值</h3>
+              <p class="card-p">
+                AI 只能提供<strong>「使用價值」</strong>（幫你寫程式、解難題），它本質上就是個功能工具。<br><br>
+                AI <strong>完全無法提供情感價值</strong>。向機器尋求心靈寄託，只會感到更深層的空虛。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-footer">
+          <span>來源：印尼員工生產力與 AI 焦慮研究 / 中小企業 GenAI 服務共創研究</span>
+          <span>第 2 / 6 頁</span>
+        </div>
+      </section>
+
+      <!-- ================= Slide 3: 人機協作 vs. 人人協作 ================= -->
+      <section class="slide" data-slide="3">
+        <div class="slide-header">
+          <span class="tag-category">第二章 ｜ 情感機制的本質差異</span>
+          <h2 class="title-main">人機協作 vs. 人人協作：為什麼對話差這麼多？</h2>
+          <p class="title-sub">科學實驗揭露殘酷的「情緒不對稱性」：跟誰協作，大腦感受完全相反！</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="split-row">
+            <!-- 左欄：AI 模式 -->
+            <div class="split-col split-ai">
+              <h3 class="split-title">🤖 人機協作（與 AI 互動）</h3>
+              <ul class="bullet-list">
+                <li>
+                  <span class="bullet-icon">❌</span>
+                  <div>
+                    <strong>「執行導向」的溝通：</strong><br>
+                    AI 的回應高度技術化、條列嚴謹、毫無起伏，就像在跟冷冰冰的售票機對話。
+                  </div>
+                </li>
+                <li>
+                  <span class="bullet-icon">⚠️</span>
+                  <div>
+                    <strong>剝削正面情緒：</strong><br>
+                    長期只跟 AI 協作，個人的好心情與熱情會被逐漸抽乾，而原有的負面焦慮卻絲毫無法減輕！
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- 右欄：人類模式 -->
+            <div class="split-col split-human">
+              <h3 class="split-title">🧑‍🤝‍🧑 人人協作（與真人夥伴）</h3>
+              <ul class="bullet-list">
+                <li>
+                  <span class="bullet-icon">✅</span>
+                  <div>
+                    <strong>「表達性與溫度」的溝通：</strong><br>
+                    人類互動包含語氣、遲疑、幽默與同理，這些「不確定性」才是真實情感交流的核心。
+                  </div>
+                </li>
+                <li>
+                  <span class="bullet-icon">🌟</span>
+                  <div>
+                    <strong>有效消除負面情緒：</strong><br>
+                    遇到卡關或挫折時，只要找真人夥伴吐苦水、聊聊天，心裡的沉重壓力就能快速得到釋放！
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-footer">
+          <span>來源：GenAI 與人類協作對福祉影響實驗研究</span>
+          <span>第 3 / 6 頁</span>
+        </div>
+      </section>
+
+      <!-- ================= Slide 4: 真實連結的不可替代性 ================= -->
+      <section class="slide" data-slide="4">
+        <div class="slide-header">
+          <span class="tag-category">第三章 ｜ 真實連結的不可替代性</span>
+          <h2 class="title-main">面對 AI 浪潮，你需要「同儕緩衝效應」</h2>
+          <p class="title-sub">當科技帶來不確定感時，最有效的解方不是升級軟體，而是走向人群。</p>
+        </div>
+
+        <div class="slide-body">
+          <!-- 上方橫幅卡片 -->
+          <div class="banner-card">
+            <h3 class="banner-title">❤️ 社會支持的力量</h3>
+            <p class="banner-desc">
+              心理學與高齡孤獨感研究證實：人類在面對重大壓力與過渡期焦慮時，最有效的策略永遠是<strong>「主動尋求真實的社會接觸」</strong>。把自己封閉在螢幕前，只會讓焦慮像滾雪球般擴大。
+            </p>
+          </div>
+
+          <!-- 下方緩衝卡片 -->
+          <div class="banner-card" style="background: #f0fdfa; border-color: #99f6e4;">
+            <h3 class="banner-title" style="color: #0f766e;">🛡️ 什麼是「同儕緩衝效應 (Peer Buffering)」？</h3>
+            <p class="banner-desc" style="color: #134e4a;">
+              同儕就像你的<strong>「心靈安全氣囊」</strong>！當大家一起面對 AI 的衝擊與課業、工作壓力時：<br>
+              同學或同事之間一句真誠的<strong>「天啊，我也看不太懂」</strong>、<strong>「我們一起試試看」</strong>，能立刻化解恐慌衝擊力。<br>
+              這種<strong>「基於人類脆弱性與共鳴」</strong>的深度連結，是世界上最聰明的 AI 都絕對給不了的。
+            </p>
+          </div>
+
+          <div class="quote-box">
+            👉 <strong>一句話心法：</strong>感到被 AI 追趕而心慌時，立刻約朋友或同事喝杯咖啡聊聊天，能快速幫心靈重開機！
+          </div>
+        </div>
+
+        <div class="slide-footer">
+          <span>來源：高齡者孤獨感經驗質性研究與同儕支持理論</span>
+          <span>第 4 / 6 頁</span>
+        </div>
+      </section>
+
+      <!-- ================= Slide 5: 建立數位福祉與適應策略 ================= -->
+      <section class="slide" data-slide="5">
+        <div class="slide-header">
+          <span class="tag-category">第四章 ｜ 建立 AI 時代的數位福祉</span>
+          <h2 class="title-main">三大適應心法：做 AI 的主人，不做奴隸</h2>
+          <p class="title-sub">學會畫出健康的人機界線，在享受科技紅利的同時保護心理能量。</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="card-row">
+            <!-- 策略 1 -->
+            <div class="info-card">
+              <span class="card-badge badge-blue">心法 1</span>
+              <h3 class="card-h3">人類本體優越性</h3>
+              <p class="card-p">
+                <strong>絕不將 AI「擬人化」！</strong><br><br>
+                把 AI 視為純粹的<strong>輔助工具</strong>（就像電動螺絲起子）。不要期待 AI 能同理你，更不要向 AI 討拍。把對情感的期待留給真實人類。
+              </p>
+            </div>
+
+            <!-- 策略 2 -->
+            <div class="info-card">
+              <span class="card-badge badge-red">心法 2</span>
+              <h3 class="card-h3">設定邊界避免疲勞</h3>
+              <p class="card-p">
+                <strong>明確設定使用時間鬧鐘！</strong><br><br>
+                不要無止境地在 Prompt 對話框前死磕重試。時間到了就果斷合上電腦，起身走動。明確切分「使用工具」與「真實生活」的界線。
+              </p>
+            </div>
+
+            <!-- 策略 3 -->
+            <div class="info-card">
+              <span class="card-badge badge-green">心法 3</span>
+              <h3 class="card-h3">保持自主與責任感</h3>
+              <p class="card-p">
+                <strong>自己握方向盤，承擔最終成果！</strong><br><br>
+                AI 生成的內容永遠只是參考草稿。保持批判性思考，活出<strong>「真實的人類價值 (Authentically Human)」</strong>，你的品味與決策才是靈魂所在。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-footer">
+          <span>來源：大學生視角之數位福祉 (Digital Wellbeing) 概念化研究</span>
+          <span>第 5 / 6 頁</span>
+        </div>
+      </section>
+
+      <!-- ================= Slide 6: 總結口訣卡 ================= -->
+      <section class="slide" data-slide="6">
+        <div class="slide-header" style="text-align: center;">
+          <span class="tag-category">核心總結 ｜ 隨身小卡</span>
+          <h2 class="title-main">與 AI 健康共處的「三不與三要」</h2>
+          <p class="title-sub">隨時檢視這張清單，別讓科技偷偷綁架了你的快樂！</p>
+        </div>
+
+        <div class="slide-body">
+          <div class="split-row">
+            <!-- 三不 -->
+            <div class="split-col split-ai">
+              <h3 class="split-title">❌【三不】避開精神耗竭</h3>
+              <ul class="bullet-list">
+                <li>
+                  <span class="bullet-icon">1.</span>
+                  <div><strong>不擬人化：</strong>AI 只是軟體工具，不要向它尋求情感認同。</div>
+                </li>
+                <li>
+                  <span class="bullet-icon">2.</span>
+                  <div><strong>不被時間吞噬：</strong>拒絕無止境盯著對話框，嚴守下線時間。</div>
+                </li>
+                <li>
+                  <span class="bullet-icon">3.</span>
+                  <div><strong>不交出思考與責任：</strong>不盲從 AI 答案，為最終成果負全責。</div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- 三要 -->
+            <div class="split-col split-human">
+              <h3 class="split-title">✅【三要】守護身心健康</h3>
+              <ul class="bullet-list">
+                <li>
+                  <span class="bullet-icon">1.</span>
+                  <div><strong>要同儕交流：</strong>焦慮時主動找真人聊聊，啟動同儕安全氣囊。</div>
+                </li>
+                <li>
+                  <span class="bullet-icon">2.</span>
+                  <div><strong>要劃定邊界：</strong>定時離線放鬆，阻斷數位過勞惡性循環。</div>
+                </li>
+                <li>
+                  <span class="bullet-icon">3.</span>
+                  <div><strong>要發揮人類真實價值：</strong>發揮同理、批判思維與原創溫度。</div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 26px; font-size: 1.25rem; font-weight: 800; color: #1e40af;">
+            🌱 「把繁複運算交給 AI，把溫度、生活與愛留給彼此。」
+          </div>
+        </div>
+
+        <div class="slide-footer">
+          <span>恭喜完成閱讀！歡迎隨時切換上一頁複習</span>
+          <span>第 6 / 6 頁 (完)</span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- 底部控制器列 -->
+  <footer>
+    <div class="nav-group">
+      <button class="btn-nav" id="btnPrev">
+        ← 上一頁
+      </button>
+      <button class="btn-nav primary" id="btnNext">
+        下一頁 →
+      </button>
+    </div>
+
+    <!-- 頁面圓點快速跳轉 -->
+    <div class="dots-container" id="dotsContainer"></div>
+
+    <!-- 頁碼 -->
+    <div class="page-indicator">
+      第 <span id="currentNum">1</span> / <span id="totalNum">6</span> 頁
+    </div>
+  </footer>
+
+  <!-- 簡報切換邏輯 (嚴格採用 display 顯隱控制，絕對不會跑版) -->
+  <script>
+    (function() {
+      // 獲取所有投影片與控制元件
+      const slides = document.querySelectorAll('.slide');
+      const totalSlides = slides.length;
+      let currentIndex = 0;
+
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const currentNum = document.getElementById('currentNum');
+      const totalNum = document.getElementById('totalNum');
+      const dotsContainer = document.getElementById('dotsContainer');
+      const btnFullscreen = document.getElementById('btnFullscreen');
+
+      totalNum.textContent = totalSlides;
+
+      // 動態建立圓點
+      slides.forEach((_, idx) => {
+        const dot = document.createElement('div');
+        dot.className = 'nav-dot' + (idx === 0 ? ' active' : '');
+        dot.title = `切換到第 ${idx + 1} 頁`;
+        dot.addEventListener('click', () => goToSlide(idx));
+        dotsContainer.appendChild(dot);
+      });
+      const dots = document.querySelectorAll('.nav-dot');
+
+      // 切換頁面核心函數
+      function goToSlide(targetIndex) {
+        if (targetIndex < 0 || targetIndex >= totalSlides) return;
+
+        // 移除目前頁面的 active 樣式
+        slides[currentIndex].classList.remove('active');
+        dots[currentIndex].classList.remove('active');
+
+        // 套用新頁面的 active 樣式
+        slides[targetIndex].classList.add('active');
+        dots[targetIndex].classList.add('active');
+
+        currentIndex = targetIndex;
+        currentNum.textContent = currentIndex + 1;
+
+        // 更新按鈕狀態
+        btnPrev.disabled = (currentIndex === 0);
+        btnNext.disabled = (currentIndex === totalSlides - 1);
+
+        if (currentIndex === totalSlides - 1) {
+          btnNext.textContent = '已至最後一頁 ✔';
+        } else {
+          btnNext.textContent = '下一頁 →';
+        }
+      }
+
+      function nextSlide() {
+        if (currentIndex < totalSlides - 1) {
+          goToSlide(currentIndex + 1);
+        }
+      }
+
+      function prevSlide() {
+        if (currentIndex > 0) {
+          goToSlide(currentIndex - 1);
+        }
+      }
+
+      // 按鈕點擊監聽
+      btnPrev.addEventListener('click', prevSlide);
+      btnNext.addEventListener('click', nextSlide);
+
+      // 鍵盤左右鍵與空白鍵監聽
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace') {
+          e.preventDefault();
+          prevSlide();
+        }
+      });
+
+      // 全螢幕切換
+      btnFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      });
+
+      // 初始化狀態
+      btnPrev.disabled = true;
+    })();
+  </script>
+</body>
+</html>
